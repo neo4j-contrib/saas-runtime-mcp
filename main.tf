@@ -30,7 +30,6 @@ variable "service_name" {
 variable "mcp_toolbox_image" {
   description = "The Docker container image for the MCP Toolbox. Corresponds to $IMAGE in the gcloud command."
   type        = string
-  // Official MCP Toolbox for Databases image. You can replace this if you have a custom image.
   default = "us-central1-docker.pkg.dev/database-toolbox/toolbox/toolbox:latest"
 }
 
@@ -68,24 +67,20 @@ variable "vpc_subnet_name" {
 // CLOUD RUN SERVICE
 // -----------------------------------------------------------------------------
 
-// Deploy the MCP Toolbox as a Cloud Run v2 service
 resource "google_cloud_run_v2_service" "mcp_toolbox_service" {
   name     = var.service_name
   location = var.gcp_region
   ingress  = "INGRESS_TRAFFIC_ALL"
 
-  // Configuration for the service template
   template {
     service_account = "${var.cloud_run_service_account_id}@${var.gcp_project_id}.iam.gserviceaccount.com"
 
-    // Define the container(s) to run
     containers {
-      image = var.mcp_toolbox_image // Use the specified MCP Toolbox image
+      image = var.mcp_toolbox_image
       ports {
-        container_port = 8080 // The MCP Toolbox typically listens on port 8080
+        container_port = 8080
       }
 
-      // Arguments passed to the container, matching the --args from gcloud command
       args = [
         "--tools-file=/app/tools.yaml", 
         "--address=0.0.0.0",            
@@ -103,10 +98,11 @@ resource "google_cloud_run_v2_service" "mcp_toolbox_service" {
     volumes {
       name = "tools-config-volume"
       secret {
-        secret = google_secret_manager_secret.tools_yaml_secret.secret_id // ID of the secret (e.g., "tools")
+        secret = google_secret_manager_secret.tools_yaml_secret.secret_id
         items {
           version = "latest"
-          path    = "tools.yaml"
+          ///////////////this was tools.yaml.  Changing to /app/tools.yaml
+          path    = "/app/tools.yaml"
         }
         default_mode = 0o400 // Permissions for the mounted file (read-only for owner)
       }
@@ -116,8 +112,7 @@ resource "google_cloud_run_v2_service" "mcp_toolbox_service" {
         network    = var.vpc_network_name
         subnetwork = var.vpc_subnet_name
       }
-      egress = "ALL_TRAFFIC" // Allows all outbound traffic through the VPC.
-                             // Change to "PRIVATE_RANGES_ONLY" if needed.
+      egress = "ALL_TRAFFIC"
     }
   }
   depends_on = [
