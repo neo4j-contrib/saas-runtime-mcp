@@ -1,11 +1,5 @@
 // main.tf
 
-// Configure the Google Cloud provider
-provider "google" {
-  project = var.gcp_project_id
-  region  = var.gcp_region
-}
-
 // -----------------------------------------------------------------------------
 // INPUT VARIABLES
 // -----------------------------------------------------------------------------
@@ -13,24 +7,13 @@ provider "google" {
 variable "gcp_project_id" {
   description = "The Google Cloud project ID where resources will be created."
   type        = string
+  default = "saas-runtime-mcp"
 }
 
 variable "gcp_region" {
   description = "The Google Cloud region for deploying the Cloud Run service."
   type        = string
   default     = "us-central1"
-}
-
-variable "service_name" {
-  description = "The name for the Cloud Run service for the MCP Toolbox."
-  type        = string
-  default     = "toolbox"
-}
-
-variable "mcp_toolbox_image" {
-  description = "The Docker container image for the MCP Toolbox. Corresponds to $IMAGE in the gcloud command."
-  type        = string
-  default = "us-central1-docker.pkg.dev/database-toolbox/toolbox/toolbox:latest"
 }
 
 variable "tools_yaml_secret_name" {
@@ -63,12 +46,19 @@ variable "vpc_subnet_name" {
   default     = "default"
 }
 
+// Configure the Google Cloud provider
+provider "google" {
+  project = var.gcp_project_id
+  region  = var.gcp_region
+}
+
 // -----------------------------------------------------------------------------
 // CLOUD RUN SERVICE
 // -----------------------------------------------------------------------------
 
 resource "google_cloud_run_v2_service" "mcp_toolbox_service" {
-  name     = var.service_name
+  deletion_protection = false
+  name     = "toolbox5"
   location = var.gcp_region
   ingress  = "INGRESS_TRAFFIC_ALL"
 
@@ -76,21 +66,20 @@ resource "google_cloud_run_v2_service" "mcp_toolbox_service" {
     service_account = "${var.cloud_run_service_account_id}@${var.gcp_project_id}.iam.gserviceaccount.com"
 
     containers {
-      image = var.mcp_toolbox_image
+      image = "us-central1-docker.pkg.dev/database-toolbox/toolbox/toolbox:latest"
       ports {
         container_port = 8080
       }
 
       args = [
-        "--tools-file=/app/tools.yaml", 
-        "--address=0.0.0.0",            
+        "--tools-file=tools.yaml", 
+        "--address=0.0.0.0",
         "--port=8080"
       ]
 
       volume_mounts {
         name       = "tools-config-volume"
-        mount_path = "/app/tools.yaml"
-        read_only  = true
+        mount_path = "/tools.yaml"
       }
     }
 
@@ -98,11 +87,11 @@ resource "google_cloud_run_v2_service" "mcp_toolbox_service" {
     volumes {
       name = "tools-config-volume"
       secret {
-        secret = google_secret_manager_secret.tools_yaml_secret.secret_id
+        secret = var.tools_yaml_secret_name
         items {
           version = "latest"
           ///////////////this was tools.yaml.  Changing to /app/tools.yaml
-          path    = "/app/tools.yaml"
+          path    = "/tools.yaml"
         }
         // Permissions for the mounted file (read-only for owner)
         //default_mode = 0o400
@@ -116,9 +105,6 @@ resource "google_cloud_run_v2_service" "mcp_toolbox_service" {
       egress = "ALL_TRAFFIC"
     }
   }
-  depends_on = [
-    google_secret_manager_secret_version.tools_yaml_secret_version
-  ]
 }
 
 // -----------------------------------------------------------------------------
@@ -145,22 +131,7 @@ output "mcp_toolbox_service_url" {
   value       = google_cloud_run_v2_service.mcp_toolbox_service.uri
 }
 
-output "mcp_toolbox_secret_name_used" {
-  description = "The name of the Secret Manager secret used for tools.yaml."
-  value       = google_secret_manager_secret.tools_yaml_secret.secret_id
-}
-
 output "cloud_run_service_account_used" {
   description = "The full email of the service account used by the Cloud Run service."
   value       = google_cloud_run_v2_service.mcp_toolbox_service.template[0].service_account
-}
-
-output "vpc_network_configured" {
-  description = "The VPC network configured for Direct VPC Egress."
-  value       = var.vpc_network_name
-}
-
-output "vpc_subnet_configured" {
-  description = "The VPC subnetwork configured for Direct VPC Egress."
-  value       = var.vpc_subnet_name
 }
