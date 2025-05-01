@@ -28,24 +28,6 @@ variable "cloud_run_service_account_id" {
   default     = "toolbox-identity"
 }
 
-variable "allow_unauthenticated_invocations" {
-  description = "If true, allows unauthenticated (public) access to the Cloud Run service (equivalent to --allow-unauthenticated). Set to false for private services."
-  type        = bool
-  default     = true
-}
-
-variable "vpc_network_name" {
-  description = "The name of the VPC network for Direct VPC Egress (e.g., 'default')."
-  type        = string
-  default     = "default"
-}
-
-variable "vpc_subnet_name" {
-  description = "The name of the VPC subnetwork for Direct VPC Egress (e.g., 'default')."
-  type        = string
-  default     = "default"
-}
-
 // Configure the Google Cloud provider
 provider "google" {
   project = var.gcp_project_id
@@ -96,8 +78,8 @@ resource "google_cloud_run_v2_service" "mcp_toolbox_service" {
     }
     vpc_access {
       network_interfaces {
-        network    = var.vpc_network_name
-        subnetwork = var.vpc_subnet_name
+        network    = "default"
+        subnetwork = "default"
       }
       egress = "ALL_TRAFFIC"
     }
@@ -105,7 +87,6 @@ resource "google_cloud_run_v2_service" "mcp_toolbox_service" {
 }
 
 resource "google_cloud_run_v2_service_iam_member" "allow_unauthenticated" {
-  count    = var.allow_unauthenticated_invocations ? 1 : 0 // Create this resource only if the variable is true
   project  = google_cloud_run_v2_service.mcp_toolbox_service.project
   location = google_cloud_run_v2_service.mcp_toolbox_service.location
   name     = google_cloud_run_v2_service.mcp_toolbox_service.name
