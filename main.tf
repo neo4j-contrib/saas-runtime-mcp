@@ -53,7 +53,7 @@ provider "google" {
 }
 
 // -----------------------------------------------------------------------------
-// CLOUD RUN SERVICE
+// RESOURCES
 // -----------------------------------------------------------------------------
 
 resource "google_cloud_run_v2_service" "mcp_toolbox_service" {
@@ -79,7 +79,7 @@ resource "google_cloud_run_v2_service" "mcp_toolbox_service" {
 
       volume_mounts {
         name       = "tools-config-volume"
-        mount_path = "/tools.yaml"
+        mount_path = "/app"
       }
     }
 
@@ -90,11 +90,8 @@ resource "google_cloud_run_v2_service" "mcp_toolbox_service" {
         secret = var.tools_yaml_secret_name
         items {
           version = "latest"
-          ///////////////this was tools.yaml.  Changing to /app/tools.yaml
-          path    = "/tools.yaml"
+          path    = "tools.yaml"
         }
-        // Permissions for the mounted file (read-only for owner)
-        //default_mode = 0o400
       }
     }
     vpc_access {
@@ -106,10 +103,6 @@ resource "google_cloud_run_v2_service" "mcp_toolbox_service" {
     }
   }
 }
-
-// -----------------------------------------------------------------------------
-// IAM FOR PUBLIC ACCESS (OPTIONAL)
-// -----------------------------------------------------------------------------
 
 resource "google_cloud_run_v2_service_iam_member" "allow_unauthenticated" {
   count    = var.allow_unauthenticated_invocations ? 1 : 0 // Create this resource only if the variable is true
