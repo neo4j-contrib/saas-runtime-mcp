@@ -88,7 +88,7 @@ resource "google_cloud_run_v2_service" "mcp_toolbox_service" {
 
       // Arguments passed to the container, matching the --args from gcloud command
       args = [
-        "--tools_file=/app/tools.yaml", // Path inside the container where tools.yaml will be mounted
+        "--tools-file=/app/tools.yaml", // Path inside the container where tools.yaml will be mounted
         "--address=0.0.0.0",            // Listen on all network interfaces
         "--port=8080"                   // Listen on port 8080
       ]
