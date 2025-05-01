@@ -40,33 +40,6 @@ variable "tools_yaml_secret_name" {
   default     = "tools" // Matches secret name from --set-secrets in gcloud command
 }
 
-variable "tools_yaml_content" {
-  description = "The content of your tools.yaml configuration file for the MCP Toolbox."
-  type        = string
-  sensitive   = true
-  // IMPORTANT: Replace the placeholder content below with your actual tools.yaml configuration.
-  // You can also load this from a file using: default = file("path/to/your/tools.yaml")
-  // Ensure the file is present when running terraform apply if using the file() function.
-  default = <<EOF
-# --- BEGIN EXAMPLE tools.yaml ---
-# REPLACE THIS ENTIRE BLOCK WITH YOUR ACTUAL tools.yaml CONTENT.
-# This is a placeholder and will likely not work without your specific configuration.
-#
-# sources:
-#   - name: "my_sample_db"
-#     type: "bigquery" # Example: can be postgresql, mysql, etc.
-#     project_id: "${var.gcp_project_id}"
-#     # Add other necessary connection details for your source
-#
-# tools:
-#   - name: "query_sample_db"
-#     source: "my_sample_db"
-#     description: "A tool to query the sample database."
-#     type: "bigquery-sql" # Example: can be postgresql-sql, etc.
-# --- END EXAMPLE tools.yaml ---
-EOF
-}
-
 variable "cloud_run_service_account_id" {
   description = "The ID (name part) of the service account for Cloud Run (e.g., 'toolbox-identity')."
   type        = string
@@ -89,33 +62,6 @@ variable "vpc_subnet_name" {
   description = "The name of the VPC subnetwork for Direct VPC Egress (e.g., 'default')."
   type        = string
   default     = "default" // Matches --subnet from gcloud command
-}
-
-
-// -----------------------------------------------------------------------------
-// SECRET MANAGER FOR tools.yaml
-// -----------------------------------------------------------------------------
-
-// Create a secret in Secret Manager to store the tools.yaml content
-resource "google_secret_manager_secret" "tools_yaml_secret" {
-  secret_id = var.tools_yaml_secret_name // Use the configured secret name
-
-  replication {
-    automatic = true // Automatically replicates the secret
-  }
-
-  labels = {
-    "service" = var.service_name,
-    "purpose" = "mcp-toolbox-configuration"
-  }
-}
-
-// Add a version to the secret with the actual tools.yaml content
-// The "latest" tag for the secret version is implicitly handled by Cloud Run when referencing the secret.
-resource "google_secret_manager_secret_version" "tools_yaml_secret_version" {
-  secret      = google_secret_manager_secret.tools_yaml_secret.id
-  secret_data = var.tools_yaml_content       // The content from the input variable
-  enabled     = true
 }
 
 // -----------------------------------------------------------------------------
@@ -149,11 +95,13 @@ resource "google_cloud_run_v2_service" "mcp_toolbox_service" {
 
       // Mount the tools.yaml file from the secret volume
       // This corresponds to --set-secrets "/app/tools.yaml=tools:latest"
+      /*
       volume_mounts {
         name       = "tools-config-volume" // Must match a volume name defined below
         mount_path = "/app/tools.yaml"      // Mount path as specified in --set-secrets
         read_only  = true                   // Mount as read-only
       }
+      */
 
       // Optional: Configure resource requests and limits
       // resources {
@@ -163,7 +111,7 @@ resource "google_cloud_run_v2_service" "mcp_toolbox_service" {
       //   }
       // }
     }
-
+/*
     // Define the volume that sources data from Secret Manager
     volumes {
       name = "tools-config-volume" // Name for the volume, referenced in volume_mounts
@@ -179,7 +127,7 @@ resource "google_cloud_run_v2_service" "mcp_toolbox_service" {
         default_mode = 0o400 // Permissions for the mounted file (read-only for owner)
       }
     }
-
+*/
     // VPC Access Configuration for Direct VPC Egress
     // Corresponds to --network and --subnet flags in gcloud command
     vpc_access {
