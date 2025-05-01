@@ -95,23 +95,12 @@ resource "google_cloud_run_v2_service" "mcp_toolbox_service" {
 
       // Mount the tools.yaml file from the secret volume
       // This corresponds to --set-secrets "/app/tools.yaml=tools:latest"
-      /*
       volume_mounts {
         name       = "tools-config-volume" // Must match a volume name defined below
         mount_path = "/app/tools.yaml"      // Mount path as specified in --set-secrets
         read_only  = true                   // Mount as read-only
       }
-      */
-
-      // Optional: Configure resource requests and limits
-      // resources {
-      //   limits = {
-      //     cpu    = "1000m" // 1 CPU core
-      //     memory = "512Mi" // 512 MB of memory
-      //   }
-      // }
     }
-/*
     // Define the volume that sources data from Secret Manager
     volumes {
       name = "tools-config-volume" // Name for the volume, referenced in volume_mounts
@@ -127,7 +116,6 @@ resource "google_cloud_run_v2_service" "mcp_toolbox_service" {
         default_mode = 0o400 // Permissions for the mounted file (read-only for owner)
       }
     }
-*/
     // VPC Access Configuration for Direct VPC Egress
     // Corresponds to --network and --subnet flags in gcloud command
     vpc_access {
@@ -139,20 +127,7 @@ resource "google_cloud_run_v2_service" "mcp_toolbox_service" {
       egress = "ALL_TRAFFIC" // Allows all outbound traffic through the VPC.
                              // Change to "PRIVATE_RANGES_ONLY" if needed.
     }
-
-    // Optional: Configure scaling behavior
-    // scaling {
-    //   min_instance_count = 0
-    //   max_instance_count = 5
-    // }
   }
-
-  // Optional: Define traffic splitting for multiple revisions (not used in this basic setup)
-  // traffic {
-  //   type    = "TRAFFIC_TARGET_ALLOCATION_TYPE_LATEST"
-  //   percent = 100
-  // }
-
   depends_on = [
     google_secret_manager_secret_version.tools_yaml_secret_version
   ]
