@@ -5,7 +5,7 @@
 variable "gcp_project_id" {
   description = "The Google Cloud project ID where resources will be created."
   type        = string
-  default = "saas-runtime-mcp"
+  default     = "saas-runtime-mcp"
 }
 
 variable "gcp_region" {
@@ -66,11 +66,11 @@ resource "google_cloud_run_v2_service" "mcp_toolbox_service" {
 }
 
 resource "google_cloud_run_v2_service_iam_member" "allow_unauthenticated" {
-  project  = google_cloud_run_v2_service.mcp_toolbox_service.project
-  location = google_cloud_run_v2_service.mcp_toolbox_service.location
-  name     = google_cloud_run_v2_service.mcp_toolbox_service.name
-  role     = "roles/run.invoker"
-  member   = "allUsers"
+  project    = google_cloud_run_v2_service.mcp_toolbox_service.project
+  location   = google_cloud_run_v2_service.mcp_toolbox_service.location
+  name       = google_cloud_run_v2_service.mcp_toolbox_service.name
+  role       = "roles/run.invoker"
+  member     = "allUsers"
   depends_on = [google_cloud_run_v2_service.mcp_toolbox_service]
 }
 
