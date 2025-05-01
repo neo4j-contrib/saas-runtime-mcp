@@ -129,8 +129,8 @@ resource "google_cloud_run_v2_service_iam_member" "allow_unauthenticated" {
   project  = google_cloud_run_v2_service.mcp_toolbox_service.project
   location = google_cloud_run_v2_service.mcp_toolbox_service.location
   name     = google_cloud_run_v2_service.mcp_toolbox_service.name
-  role     = "roles/run.invoker" // Role that allows invoking the Cloud Run service
-  member   = "allUsers"          // Special identifier for "anyone"
+  role     = "roles/run.invoker"
+  member   = "allUsers"
 
   depends_on = [google_cloud_run_v2_service.mcp_toolbox_service]
 }
