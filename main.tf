@@ -104,7 +104,8 @@ resource "google_cloud_run_v2_service" "mcp_toolbox_service" {
           ///////////////this was tools.yaml.  Changing to /app/tools.yaml
           path    = "/app/tools.yaml"
         }
-        default_mode = 0o400 // Permissions for the mounted file (read-only for owner)
+        // Permissions for the mounted file (read-only for owner)
+        //default_mode = 0o400
       }
     }
     vpc_access {
