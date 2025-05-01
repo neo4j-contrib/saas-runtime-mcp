@@ -1,3 +1,8 @@
+provider "google" {
+  project = var.gcp_project_id
+  region  = var.gcp_region
+}
+
 // -----------------------------------------------------------------------------
 // INPUT VARIABLES
 // -----------------------------------------------------------------------------
@@ -12,12 +17,6 @@ variable "gcp_region" {
   description = "The Google Cloud region for deploying the Cloud Run service."
   type        = string
   default     = "us-central1"
-}
-
-// Configure the Google Cloud provider
-provider "google" {
-  project = var.gcp_project_id
-  region  = var.gcp_region
 }
 
 // -----------------------------------------------------------------------------
